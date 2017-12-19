@@ -1,4 +1,0 @@
----
-git_lfs_install_url: https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh
-
-git_packages_lfs: git-lfs

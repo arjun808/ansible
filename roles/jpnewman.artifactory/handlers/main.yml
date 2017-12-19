@@ -1,3 +1,0 @@
----
-- name: restart artifactory
-  service: "name={{ artifactory_service_name }} state=restarted"

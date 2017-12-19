@@ -1,9 +1,0 @@
----
-# test file
-
-- name: Install Tomcat 7.
-  hosts: localhost
-  roles:
-    - role: role_under_test
-      tomcat7_packages:
-        - tomcat

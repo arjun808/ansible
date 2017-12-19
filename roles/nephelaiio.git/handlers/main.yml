@@ -1,0 +1,5 @@
+---
+- name: initialize git-lfs
+  shell: git lfs install
+  tags:
+    - skip_ansible_lint

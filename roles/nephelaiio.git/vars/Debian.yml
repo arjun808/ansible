@@ -1,0 +1,6 @@
+---
+git_packages: git,curl
+
+git_lfs_install_url: https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh
+
+git_packages_lfs: git-lfs

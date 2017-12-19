@@ -1,0 +1,25 @@
+---
+
+galaxy_info:
+  author: Bas Meijer
+  description: JFrog Repository manager
+  company: bbaassssiiee
+
+  license: MIT
+  min_ansible_version: 1.9
+
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+
+  galaxy_tags:
+    - database
+    - database:sql
+    - development
+    - packaging
+    - web
+
+dependencies:
+  - bbaassssiiee.base_java8

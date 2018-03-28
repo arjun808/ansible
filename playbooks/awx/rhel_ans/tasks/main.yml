@@ -1,0 +1,14 @@
+---
+- command: pip install docker-py
+- command: yum install wget -y
+- command: wget http://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-11.noarch.rpm 
+- command: rpm -ivh epel-release-7-11.noarch.rpm
+- command: sudo yum install epel-release
+- command: wget ftp://mirror.switch.ch/pool/4/mirror/scientificlinux/7x/external_products/extras/x86_64/ansible-2.4.0.0-5.el7.noarch.rpm
+- command: yum install python-cryptography python-httplib2 python-paramiko python-passlib python2-jmespath sshpass -y
+- command: rpm -ivh ansible-2.4.0.0-5.el7.noarch.rpm
+- command: rm epel-release-7-10.noarch.rpm ansible-2.4.0.0-5.el7.noarch.rpm anaconda-ks.cfg original-ks.cfg -f
+- command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+- command: sudo python get-pip.py
+- command: sudo pip install awscli
+- command: sudo pip install boto3

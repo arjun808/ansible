@@ -1,0 +1,19 @@
+version: '2'
+services:
+  s1:
+    image: arjun808/gameoflife:latest
+    command: "start arjun808/gameoflife --topology leader"
+  s2:
+    image: arjun808/gameoflife:latest
+    command: "start arjun808/gameoflife --topology leader --peer s1"
+  s3:
+    image: arjun808/gameoflife:latest
+    command: "start arjun808/gameoflife --topology leader --peer s1"
+  lb1:
+    image: arjun808/nginx-lb:latest
+    command: "start arjun808/nginx-lb --bind backend:gameoflife.default --peer s1"
+    ports:
+        - 80:80
+        - 9631:9631
+        - 9638:9638
+

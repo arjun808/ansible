@@ -1,0 +1,7 @@
+plugins:
+  - git
+  - ssh-credentials
+  - job-dsl
+  - credentials
+  - workflow-step-api
+  - ansible

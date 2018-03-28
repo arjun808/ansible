@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  user: ec2-user
+  connection: local
+  gather_facts: false
+  tasks:
+   - name: gather ansible master facts for passing variable
+     ec2_instance_facts:
+      filters:
+       "tag:Name": Ansible
+     register: ansible
+
+   - name: launch ansible cloudformation example
+     cloudformation:
+      stack_name: "ansible-cloudformation"
+      state: "present"
+      region: "us-west-2"
+      template: "files/TestCF.yaml"
+      template_parameters:
+        KeyName: ansible
+        InstanceType: t2.micro
+        SSHLocation: 0.0.0.0/0
+        Subnet: "{{ ansible.instances[0].subnet_id }}"
+        VPC: "{{ ansible.instances[0].vpc_id }}"
+      tags:
+        Name: "ansibleCF"

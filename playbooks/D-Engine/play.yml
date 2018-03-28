@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  user: ec2-user
+  become: yes
+  connection: local
+  gather_facts: false
+  vars_files:
+    - var/main.yml
+  vars:
+   vpc_tag : 'dev'
+   cidr_block: '192.168.0.0/16'
+   cidr_subnets: '192.168.10.0/24, 192.168.20.0/24'
+  roles:
+    - ansible_facts
+    - vpc_creation
+    - nat_gateway_creation
+    - vpc_peer_creation 
+    - web_creation
+    - db_creation
+    - refresh
+
+- hosts: tag_Name_webserver
+  user: ec2-user
+  become: yes 
+  gather_facts: true
+  vars_files:
+    - var/main.yml
+  roles:
+    - devops.tomcat7 
+
+- hosts: tag_Name_dbserver
+  user: ec2-user
+  become: yes
+  gather_facts: true
+  vars_files:
+    - var/main.yml
+  roles:
+   - geerlingguy.mysql

@@ -1,0 +1,17 @@
+---
+ec2_config:
+  region: us-west-1
+  zone1: us-west-1a
+  zone2: us-west-1c
+  keypair: ansible 
+  instance_type: t2.micro
+  image: ami-223f945a
+#  vpc_subnet_id: subnet-bcc41af5
+  group1: websg
+  group2: dbsg
+  assign_public_ip: true
+  instance_tag_name1: webserver
+  instance_tag_name2: dbserver
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa
+

@@ -1,0 +1,144 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample:
+  Create an Amazon EC2 instance running the Amazon Linux AMI. The AMI is chosen based
+  on the region in which the stack is run. This example creates an EC2 security group
+  for the instance to give you SSH access. **WARNING** This template creates an Amazon
+  EC2 instance. You will be billed for the AWS resources used if you create a stack
+  from this template.'
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t1.micro
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    ConstraintDescription: must be a valid EC2 instance type.
+  Subnet:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-76d8da3f
+    Description: 'Instance Subnet ID'
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-3e637259
+    Description: 'Instance VPC ID'
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: PV64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+  AWSInstanceType2NATArch:
+    t1.micro:
+      Arch: NATPV64
+    t2.nano:
+      Arch: NATHVM64
+    t2.micro:
+      Arch: NATHVM64
+    t2.small:
+      Arch: NATHVM64
+    t2.medium:
+      Arch: NATHVM64
+    t2.large:
+      Arch: NATHVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      PV64: ami-2a69aa47
+      HVM64: ami-6869aa05
+      HVMG2: ami-61e27177
+    us-west-2:
+      PV64: ami-7f77b31f
+      HVM64: ami-7172b611
+      HVMG2: ami-60aa3700
+    us-west-1:
+      PV64: ami-a2490dc2
+      HVM64: ami-31490d51
+      HVMG2: ami-4b694d2b
+    eu-west-1:
+      PV64: ami-4cdd453f
+      HVM64: ami-f9dd458a
+      HVMG2: ami-2955524f
+    eu-west-2:
+      PV64: NOT_SUPPORTED
+      HVM64: ami-886369ec
+      HVMG2: NOT_SUPPORTED
+    eu-central-1:
+      PV64: ami-6527cf0a
+      HVM64: ami-ea26ce85
+      HVMG2: ami-81ac71ee
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType:
+        Ref: InstanceType
+      SubnetId:
+        Ref: Subnet
+      KeyName:
+        Ref: KeyName
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionArch2AMI
+        - Ref: AWS::Region
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - Ref: InstanceType
+          - Arch
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: SSHLocation
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value:
+      Ref: EC2Instance
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - AvailabilityZone
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - PublicDnsName
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - PublicIp

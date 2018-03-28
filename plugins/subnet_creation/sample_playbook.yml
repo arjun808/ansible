@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  user: root
+  connection: local
+  gather_facts: false
+  tasks:
+   - subnet_creation:
+      vpc_id: vpc-fe46ff87
+      cidr: 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24
+      region: us-west-2
+      az: us-west-2a
+      resource_tags:
+        Name: websubnet, dbsubnet, fakesubnet
+        env: dev

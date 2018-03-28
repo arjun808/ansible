@@ -1,0 +1,36 @@
+---
+- ec2_instance_facts:
+   region: us-west-2
+   filters:
+    "tag:Name": dbserver
+  register: mydb 
+  delegate_to: localhost
+ 
+- debug:
+   var: item.public_ip_address
+  with_items:
+      - "{{ mydb.instances }}"
+    
+- name: creating context path directory in webapps
+  file: path=/usr/share/tomcat/webapps/dengine state=directory mode=0777
+
+- name: creating index.html
+  file: path=/usr/share/tomcat/webapps/dengine/index.html state=touch mode=0777
+
+- name: editing index.html (1)
+  lineinfile:
+            path: /usr/share/tomcat/webapps/dengine/index.html
+            line: '<html><header><title>This is Vanguard</title></header><body>This is Project Vanguard. My database has the IP:'
+  
+- name: inserting IPs to file
+  lineinfile:
+   dest: /usr/share/tomcat/webapps/dengine/index.html
+   regexp: "{{ item.public_ip_address }}"
+   line: "{{ item.public_ip_address }}"
+  with_items:
+    - "{{ mydb.instances }}"
+
+- name: editing index.html (2)
+  lineinfile:
+            path: /usr/share/tomcat/webapps/dengine/index.html
+            line: '</body></html>'

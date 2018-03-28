@@ -1,0 +1,14 @@
+---
+ec2_config:
+  region: us-west-2
+  zone: us-west-2c
+  keypair: rhel_ans
+  instance_type: t2.micro
+  image: ami-9fa343e7
+#  vpc_subnet_id: subnet-bcc41af5
+  group: dev-all
+  assign_public_ip: true
+  instance_tag_name1: webserver
+  instance_tag_name2: db
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa    

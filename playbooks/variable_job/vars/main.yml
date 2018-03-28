@@ -1,0 +1,17 @@
+---
+ec2_config:
+  region: us-west-2
+  zone: us-west-2c
+  keypair: engine
+  instance_type: t2.micro
+  image: ami-9fa343e7
+#  vpc_subnet_id: subnet-bcc41af5
+  group: all
+  assign_public_ip: true
+  instance_tag_name1: tomcat
+  instance_tag_name2: mysql
+  instance_tag_name3: ciserver
+  instance_tag_name4: artifactory
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa
+

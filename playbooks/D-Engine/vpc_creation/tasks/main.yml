@@ -1,0 +1,114 @@
+---
+- name: creating VPC
+  ec2_vpc_net:
+    name: "{{ vpc_tag }}"
+    cidr_block: "{{ cidr_block }}"
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: ec2_vpc_net
+      env: "{{ vpc_tag }}"
+  register: myvpc
+
+- name: creating public/private subnet(s)
+  subnet_creation:
+    state: present
+    vpc_id: "{{ myvpc.vpc.id }}"
+    cidr: "{{ cidr_subnets }}"
+    region: "{{ ec2_config.region }}"
+    az: "{{ ec2_config.zone1 }}"
+    resource_tags:
+      Name: websubnet, dbsubnet
+      env: "{{ vpc_tag }}"
+  register: subnets
+
+- name: registering facts about newly created public subnet
+  ec2_vpc_subnet_facts:
+   filters:
+     "tag:Name": websubnet
+   region: "{{ ec2_config.region }}"
+  register: web_subnet
+
+- name: registering facts about newly created private subnet
+  ec2_vpc_subnet_facts:
+   filters:
+     "tag:Name": dbsubnet
+   region: "{{ ec2_config.region }}"
+  register: db_subnet
+
+- debug:
+   var: web_subnet
+
+- debug:
+   var: db_subnet
+  
+- name: creating internet gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    state: present
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: gateway
+      env: "{{ vpc_tag }}"
+  register: igw
+
+- name: Set up public subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: Public route table
+      env: "{{ vpc_tag }}"
+    subnets:
+      - "{{ web_subnet.subnets[0].cidr_block  }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+      - dest: "{{ cidr_block }}"
+        vpc_id: "{{ myvpc.vpc.id }}"
+  register: public_route_table
+
+- name: Set up private subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: Private route table
+      env: "{{ vpc_tag }}"
+    subnets:
+      - "{{ db_subnet.subnets[0].cidr_block }}"
+    routes:
+      - dest: "{{ cidr_block }}"
+        vpc_id: "{{ myvpc.vpc.id }}"
+  register: private_route_table
+
+- name: security group for webserver
+  ec2_group:
+    name: websg
+    description: security group for webserver
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: websg
+      env: "{{ vpc_tag }}"
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+  register: web_sg
+
+- name: security group for dbserver
+  ec2_group:
+    name: dbsg
+    description: security group for dbserver
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: "{{ ec2_config.region }}"
+    tags:
+      Name: dbsg
+      env: "{{ vpc_tag }}"
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+  register: db_sg

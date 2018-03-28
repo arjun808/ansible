@@ -1,0 +1,13 @@
+---
+ec2_config:
+  region: us-west-1
+  zone: us-west-1c
+  keypair: ansible
+  instance_type: t2.medium
+  image: ami-79873901
+#  vpc_subnet_id: subnet-bcc41af5
+  group: All
+  assign_public_ip: true
+  instance_tag_name: amibuild 
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa    

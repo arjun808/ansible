@@ -1,0 +1,13 @@
+---
+ec2_config:
+  region: us-west-2
+  zone: us-west-2c
+  keypair: ansible
+  instance_type: t2.medium
+  image: ami-79873901
+#  vpc_subnet_id: subnet-bcc41af5
+  group: All
+  assign_public_ip: true
+  instance_tag_name: awx 
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa    

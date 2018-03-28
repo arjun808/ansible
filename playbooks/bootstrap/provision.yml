@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+  user: root 
+  become_method: sudo
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  roles:
+    - ec2_creation
+    - refresh
+
+#- hosts: tag_Name_trial
+#  user: ec2-user
+#  become: yes 
+#  become_user: root
+#  roles:
+#    - geerlingguy.apache
+#    - geerlingguy.php

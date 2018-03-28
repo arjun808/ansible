@@ -1,0 +1,27 @@
+---
+- name: Gathering facts in Ansible master's VPC id
+  ec2_instance_facts:
+   filters:
+    "tag:Name": Ansible
+  register: master
+
+- ec2_vpc_route_table_facts:
+   filters:
+    "tag:Name": AnsibleRouteTable
+   region: "{{ ec2_config.region }}"
+  register: ansibleroutetable
+
+- ec2_group_facts:
+    filters:
+      "tag:Name": AnsibleSecurityGroup
+    region: "{{ ec2_config.region }}"
+  register: ansiblesecuritygroup
+
+- ec2_vpc_igw_facts:
+   filters:
+      "tag:Name": AnsibleIGW
+   region: "{{ ec2_config.region }}"
+  register: ansibleigw
+
+- debug:
+   var: ansibleigw.internet_gateways[0].internet_gateway_id

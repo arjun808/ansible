@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  user: ec2-user
+  connection: local
+  gather_facts: false
+  tasks:
+   - cloudformation:
+        stack_name: "ansible-cloudformation"
+        state: "absent"

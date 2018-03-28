@@ -1,0 +1,30 @@
+---
+# group_vars/all.yml
+
+region: us-west-2
+zone: us-west-2c
+keypair: rhel_ans
+security_groups: All
+instance_type: t2.micro 
+volumes:
+  - device_name: /dev/sda1
+    device_type: gp2
+    volume_size: 20
+    delete_on_termination: true
+
+ec2_config:
+  region: us-west-2
+  zone: us-west-2c
+  keypair: rhel_ans
+  instance_type: t2.micro
+  image: ami-6e1a0117 
+#  vpc_subnet_id: subnet-bcc41af5
+  group: All
+  assign_public_ip: true
+  instance_tag_name: amibuild
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa
+
+asg_properties:
+  desired_capacity: 1
+  replace_batch_size: 3

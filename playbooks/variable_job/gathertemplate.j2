@@ -1,0 +1,4 @@
+{% set dbserver = hostvars[groups['tag_Name_{{ec2_config.instance_tag_name2}}'][0]]['ansible_default_ipv4']['address'] %}
+
+host name of the server is {{ dbserver }}
+

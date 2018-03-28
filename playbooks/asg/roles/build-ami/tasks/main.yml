@@ -1,0 +1,10 @@
+---
+# roles/build-ami/tasks/main.yml
+- name: Create AMI
+  ec2_ami:
+    region: "{{ region }}"
+    instance_id: "{{ ec2_id }}"
+    name: "webapp"
+    wait: yes
+    state: present
+  register: ami

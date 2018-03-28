@@ -1,0 +1,10 @@
+---
+- name: creating nat gateway
+  ec2_vpc_nat_gateway:
+    state: present
+    subnet_id: "{{ web_subnet.subnets[0].id }}" 
+    region: "{{ ec2_config.region }}"
+  register: nat_gateway
+
+- debug:
+   var: nat_gateway

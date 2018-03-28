@@ -1,0 +1,55 @@
+---
+- name: creating VPC
+  ec2_vpc_net:
+    name: dev
+    cidr_block: 192.168.0.0/16
+    region: us-west-2
+    tags:
+      module: ec2_vpc_net
+  register: myvpc
+
+- name: creating subnet
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ myvpc.vpc.id }}" 
+    cidr: 192.168.10.0/24
+    az: us-west-2b
+    resource_tags:
+      Name: WebSubnet
+  register: web_subnet
+
+- debug:
+   var: web_subnet
+
+- name: creating internet gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    state: present
+    region: us-west-2
+  register: igw
+
+- name: Set up public subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: us-west-2
+    tags:
+      Name: Public
+    subnets:
+      - 192.168.10.0/24
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+  register: public_route_table
+
+
+- name: example ec2 group
+  ec2_group:
+    name: dev-all
+    description: security group for dev env
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: us-west-2
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0

@@ -1,0 +1,113 @@
+---
+- name: Create local account VPC peering Connection
+  ec2_vpc_peer:
+    region: "{{ ec2_config.region }}"
+    vpc_id: "{{ master.instances[0].vpc_id }}"
+    peer_vpc_id: "{{ myvpc.vpc.id }}" 
+    state: present
+    tags:
+      Name: Peer1 
+  register: vpc_peer
+
+- name: Accept local VPC peering request
+  ec2_vpc_peer:
+    region: "{{ ec2_config.region }}"
+    peering_id: "{{ vpc_peer.peering_id }}"
+    state: accept
+    tags:
+      Name: Peer1
+  register: action_peer
+
+- name: updating Ansible subnet route table with VPC peering connection ID
+  ec2_vpc_route_table:
+   route_table_id: "{{ ansibleroutetable.route_tables[0].associations[0].route_table_id }}"
+   vpc_id: "{{ansibleroutetable.route_tables[0].vpc_id }}"
+   region: "{{ ec2_config.region }}"
+   lookup: id
+   routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ ansibleigw.internet_gateways[0].internet_gateway_id }}"
+      - dest: "{{ cidr_block }}"
+        vpc_peering_connection_id: "{{ vpc_peer.peering_id }}"
+
+- name: updating public subnet route table with VPC peering connection ID
+  ec2_vpc_route_table:
+   route_table_id: "{{ public_route_table.route_table.id }}"
+   vpc_id: "{{ public_route_table.route_table.vpc_id }}"
+   region: "{{ ec2_config.region }}"
+   lookup: id
+   routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}" 
+      - dest: "{{ ansibleroutetable.route_tables[0].routes[0].destination_cidr_block }}"
+        vpc_peering_connection_id: "{{ vpc_peer.peering_id }}"
+
+- name: updating private subnet route table with VPC peering connection ID
+  ec2_vpc_route_table:
+   route_table_id: "{{ private_route_table.route_table.id }}"
+   vpc_id: "{{ private_route_table.route_table.vpc_id }}"
+   region: "{{ ec2_config.region }}"
+   lookup: id
+   routes:
+      - dest: "{{ ansibleroutetable.route_tables[0].routes[0].destination_cidr_block }}"
+        vpc_peering_connection_id: "{{ vpc_peer.peering_id }}"
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+
+- name: referencing vpc peers security group in Ansible security group
+  ec2_group:
+    name: AnsibleSecurityGroup
+    group_id: "{{ ansiblesecuritygroup.security_groups[0].group_id }}"
+    region: "{{ ec2_config.region }}"
+    description: All Ports Open
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        group_id: "{{ web_sg.group_id }}"
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        group_id: "{{ db_sg.group_id }}"
+
+- name: referencing Ansible security group in vpc peer (webserver) security group
+  ec2_group:
+    name: websubnet
+    group_id: "{{ web_sg.group_id }}"
+    region: "{{ ec2_config.region }}"
+    description: security group for webserver
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        group_id: "{{ ansiblesecuritygroup.security_groups[0].group_id }}"
+
+- name: referencing Ansible security group in vpc peer (dbserver) security group
+  ec2_group:
+    name: websubnet
+    group_id: "{{ db_sg.group_id }}"
+    region: "{{ ec2_config.region }}"
+    description: security group for dbserver
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        group_id: "{{ ansiblesecuritygroup.security_groups[0].group_id }}"
+

@@ -1,0 +1,47 @@
+---
+#- name: Find existing instance(s)
+#  hosts: tag_Name_{{ ec2_config.instance_tag_name }}
+#  gather_facts: false
+#  tags: find
+#  vars_files:
+#    - group_vars/all.yml 
+#  tasks:
+#    - name: Add to oldamibuild group
+#      group_by:
+#        key: oldamibuild
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    - role: launch
+      name: "{{ ec2_config.instance_tag_name }}"
+    - role: refresh
+
+- hosts: tag_Name_{{ ec2_config.instance_tag_name }}
+  remote_user: root
+  gather_facts: false
+  vars_files:
+    - group_vars/all.yml
+  pre_tasks:
+    - name: 'install python2'
+      raw: apt-get install python-simplejson -y
+
+- hosts: tag_Name_{{ ec2_config.instance_tag_name }}
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    - deploy
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    - build-ami
+    - create-launch-configuration
+    - load-balancer
+    - auto-scaling

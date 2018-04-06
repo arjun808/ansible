@@ -1,0 +1,47 @@
+---
+- name: installing add-ons for Redhat family
+  yum:
+   name: "{{ item }}"
+   state: latest
+  with_items:
+    - gcc-c++
+    - make
+  when: ansible_os_family == 'RedHat'
+
+- name: installing add-ons for Ubuntu
+  apt:
+   name: "{{ item }}"
+   state: latest
+  with_items:
+    - gcc-c++
+    - make
+  when: ansible_os_family == 'Debian'
+
+- name: downloading setup files
+  get_url: 
+     url: https://rpm.nodesource.com/setup_8.x
+     dest: /tmp/setup_8.x
+  when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
+
+- name: executing setup files
+  shell: bash /tmp/setup_8.x && touch /tmp/setup_8.x.done
+  args:
+    creates: /tmp/setup_8.x.done
+  when: ansible_os_family == 'RedHat' or ansible_os_family == 'Debian'
+
+- name: installing nodejs and npm for Redhat family
+  yum:
+   name: nodejs
+   state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: installing nodejs and npm for Ubuntu
+  apt:
+   name: nodejs
+   state: present
+  when: ansible_os_family == 'Debian'
+
+- name: error message
+  debug:
+    msg: 'The instance is not Ubuntu or of Redhat family. This role cannot be used.'
+  when: ansible_os_family != 'RedHat' and ansible_os_family != 'Debian'

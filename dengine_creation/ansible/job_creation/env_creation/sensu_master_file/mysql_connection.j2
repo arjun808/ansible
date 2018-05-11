@@ -1,0 +1,14 @@
+{% for hosts in groups [ 'tag_Name_Sensu' ] %}
+{
+      "checks": {
+         "mysql_connection__check": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-mysql-connections.rb -h localhost -u root -p root -P 3306 -s /var/lib/mysql/mysql.sock -w 100 -c 128 ",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %}
+

@@ -1,0 +1,23 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+          "client": {
+            "name": "sensu-server",
+            "address": "127.0.0.1",
+            "environment": "sensu",
+            "subscriptions": [ "linux"],
+            "keepalive":
+            {
+           "handler": "mailer",
+            "thresholds": {
+            "warning": 250,
+            "critical": 300
+          }
+            },
+"socket": {
+          "bind": "127.0.0.1",
+          "port": 3030
+            }
+          }
+}
+{% endfor %}
+

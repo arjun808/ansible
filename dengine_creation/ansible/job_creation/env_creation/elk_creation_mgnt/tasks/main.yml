@@ -1,0 +1,46 @@
+---
+- name: Gather facts about subnet
+  ec2_vpc_subnet_facts:
+   filters:
+     "tag:Name": mysubnet
+   region: us-west-2
+  register: firstsubnet
+- debug:
+    var: firstsubnet
+
+- name: Finding the latest RHEL AMI id
+  ec2_ami_find:
+   name: "RHEL-7.4_HVM-*"
+   region: "{{ec2_config.region}}"
+  register: ami_find
+
+- name: Creating EC2 Instance
+  ec2:
+    region: "{{ec2_config.region}}"
+    aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    zone: "{{ ec2_config.zone  }}"
+    keypair: "{{ec2_config.keypair}}"
+    instance_type: "{{elk_instance_type}}"
+    image: "{{ami_find.results[0].ami_id}}"
+    vpc_subnet_id: "{{ firstsubnet.subnets[0].id }}"
+    group: "{{ec2_config.group}}"
+    assign_public_ip: "{{ec2_config.assign_public_ip}}"
+    count: 1
+    wait: yes
+    instance_tags:
+       Name: "{{ec2_config.Log_monitoring }}"
+       Env: "{{ Env1 }} "
+  register: ec2
+
+- name: Debug instance
+  debug: msg={{ item.public_ip }}
+  with_items:
+    - "{{ ec2.instances }}"
+
+- name: Waiting for Instances to listen on port 22
+  wait_for:
+    state: started
+    host: "{{ ec2.instances[0].public_ip }}"
+    port: 22
+    timeout: 320

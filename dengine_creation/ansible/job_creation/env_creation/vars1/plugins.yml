@@ -1,0 +1,8 @@
+plugins:
+  - github-pullrequest
+  - deploy
+  - ssh-slaves
+  - ssh
+  - ssh-agent
+  - artifactory
+  - ansible

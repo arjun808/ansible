@@ -1,0 +1,179 @@
+---
+#- hosts: tag_Name_Sensu
+#  become_method: sudo
+#  remote_user: ec2-user
+#  become: yes
+#  become_user: root
+#  gather_facts: true
+#  vars_files:
+#    - vars1/main.yml
+#  roles:
+#    - role: sensu_master_mgnt
+
+#- hosts: tag_Name_Elk
+#  become_method: sudo
+#  remote_user: ec2-user
+#  become: yes
+#  become_user: root
+#  gather_facts: true
+#  vars_files:
+#    - vars1/main.yml
+#  roles:
+#     - java
+#     - role: elk_master
+
+- hosts: tag_Name_Maven
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  vars:
+    - instance_tag: Maven
+  tasks:
+  - name: installing git
+    yum:
+      name: git
+      state: present
+  - name: creating directory for jenkins master slave
+    file:
+      path: /var/lib/jenkins
+      state: directory
+      mode: 0777
+  roles:
+    - role: java
+    - role: maven
+
+- hosts: tag_Name_Jfrog
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  vars:
+    - instance_tag: Jfrog
+  roles:
+    - role: java
+    - role: artifact
+
+
+- hosts: tag_Name_Jenkins
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+    - vars1/plugins.yml
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk
+    - { role: geerlingguy.jenkins, jenkins_plugins: "{{ plugins }}", become: true }
+#    - role: sensu_client_mgnt
+#    - role: elk_client_jenkins
+  tasks:
+  - name: getiing jenkins ip address
+    ec2_instance_facts:
+      filters:
+        "tag:Name": Jenkins
+      region: us-west-2
+    register: Jenkins_debug
+    delegate_to: localhost
+  - debug:
+     var: Jenkins_debug
+    
+  - name: getiing maven ip address
+    ec2_instance_facts:
+      filters:
+        "tag:Name": Maven
+      region: us-west-2
+    register: maven_debug
+    delegate_to: localhost
+  - debug:
+     var: maven_debug
+
+  - name: getiing artifact ip address
+    ec2_instance_facts:
+      filters:
+        "tag:Name": Jfrog
+      region: us-west-2
+    register: artifact_debug
+    delegate_to: localhost
+  - debug:
+     var: artifact_debug
+  - name: restarting server
+    systemd:
+      name: jenkins
+      state: restarted
+
+  - name: installing git
+    yum:
+      name: git
+      state: present
+  - name: creating credentials file using groovy script
+    jenkins_script:
+      script: "{{ lookup('file', '/root/dengine_creation/ansible/job_creation/env_creation/credentials.groovy') }}"
+      user: admin
+      password: admin
+      url: http://{{ Jenkins_debug.instances[0].public_ip_address }}:8080
+    become: true
+    delegate_to: localhost
+    
+  - name: template for artifact config file
+    template:
+      src: /root/dengine_creation/ansible/job_creation/env_creation/artifact_config.j2
+      dest: /var/lib/jenkins/org.jfrog.hudson.ArtifactoryBuilder.xml
+  - name: config file for maven home path
+    copy:
+      src: /root/dengine_creation/ansible/job_creation/env_creation/maven_config.xml
+      dest: /var/lib/jenkins/hudson.tasks.Maven.xml
+
+  - name: creating file for node
+    file:
+      path: /var/lib/jenkins/nodes/maven1
+      state: directory
+  - name: config file to make maven as slave
+    template:
+      src: /root/dengine_creation/ansible/job_creation/env_creation/maven_slave_config.j2 
+      dest: /var/lib/jenkins/nodes/maven1/config.xml
+  - name: creating node using jenkins-cli
+    shell: sudo java -jar /opt/jenkins-cli.jar -s http://{{ Jenkins_debug.instances[0].public_ip_address }}:8080 create-node maven1 --username admin --password admin < /var/lib/jenkins/nodes/maven1/config.xml
+    ignore_errors: yes
+  - name: installing dependencies of lxml
+    yum:
+      name: libxslt-devel
+      state: present
+    delegate_to: localhost
+  - name: getting url
+    get_url:
+      url: https://bootstrap.pypa.io/get-pip.py
+      dest: /root
+  - name: 
+    command: sudo python get-pip.py
+    args:
+      chdir: /root
+  - name: installing lxml
+    pip:
+      name: lxml
+    delegate_to: localhost
+  - name: install python jenkins using pip
+    pip:
+      name: python-jenkins
+    delegate_to: localhost
+  - name: create job
+    jenkins_job:
+      config: "{{ lookup('file', '/root/dengine_creation/ansible/job_creation/env_creation/build_job_config.xml') }}"
+      name: test
+      password: admin
+      url: http://{{ Jenkins_debug.instances[0].public_dns_name }}:8080
+      user: admin
+      state: present
+    delegate_to: localhost
+

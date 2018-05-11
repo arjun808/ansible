@@ -1,0 +1,12 @@
+---
+ec2_config:
+  region: us-west-2
+  zone: us-west-2a
+  keypair: meghu
+  image: ami-223f945a
+  group: mysg
+  assign_public_ip: true
+  remote_user: ec2-user
+  ssh_path: ~/.ssh/id_rsa
+
+

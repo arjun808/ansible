@@ -1,0 +1,15 @@
+{% for hosts in groups [ 'tag_Name_Sensu' ] %}
+{
+      "checks": {
+         "mysql_alive_check": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-mysql-alive.rb -h localhost -u root -p root -P 3306 -d rag_db -s /var/lib/mysql/mysql.sock",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %}
+
+

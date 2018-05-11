@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  user: ec2-user
+  become_method: sudo
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  vars:
+    - vpc_tag: ''
+    - cidrBlock: ''
+    - cidr_subnets: ''
+  roles:
+    - vpc_creation
+

@@ -1,0 +1,33 @@
+---
+- name: Gathering facts in Ansible master's VPC id
+  ec2_instance_facts:
+   filters:
+    "tag:Name": Tomcat
+  register: Web_debug
+- debug:
+    var: Web_debug
+
+- ec2_elb_lb:
+     name: "loadbalancer"
+     state: present
+     listeners:
+       - protocol: http
+         load_balancer_port: 80
+         instance_port: 8080
+     health_check:
+        ping_protocol: http
+        ping_port: 8080
+        ping_path: "/sample/index.html"
+        response_timeout: 5
+        interval: 30
+        unhealthy_threshold: 2
+        healthy_threshold: 10
+     instance_ids:
+       - "{{ Web_debug.instances[0].instance_id }}"
+       - "{{ Web_debug.instances[1].instance_id }}"
+     tags:
+       Name: "UAT"
+     region: us-west-2
+     zones:
+       - us-west-2a
+       - us-west-2b

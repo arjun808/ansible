@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars:
+    - Env3: 'PROD'
+    - Search_Engine : 'Elasticsearch'
+    - Cache : 'Redis'
+    - Web : 'Tomcat'
+    - Database: 'MySql'
+    - Monitoring: 'Sensu'
+    - search_engine_instance_type: 't2.micro'
+    - cache_instance_type: 't2.micro'
+    - Web_instance_type: 't2.micro'
+    - database_instance_type: 't2.micro'
+    - Web_server_count: '1'
+    - sensu_instance_type: 't2.micro'
+    - Log_monitoring: 'Elk'
+    - elk_instance_type: 't2.micro'
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - { role: sensu_creation_prod, when: Monitoring == 'Sensu' }
+    - { role: elasticsearch_creation_prod, when: Search_Engine == 'Elasticsearch' }
+    - { role: redis_creation_prod, when: Cache == 'Redis' }
+    - { role: web_creation_prod, when: Web == 'Tomcat' }
+    - { role: db_creation_prod, when: Database  == 'MySql' }
+    - { role: sensu_creation_prod, when: Monitoring == 'Sensu' }
+    - { role: elk_creation_prod, when: Log_monitoring == 'Elk' }
+    - role: refresh
+
+- include: uat_prod_bootstrap.yml
+

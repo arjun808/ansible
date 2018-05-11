@@ -1,0 +1,35 @@
+---
+- name: copy ssl certificate from ansible master to nodes
+  copy:
+    src: /etc/ssl/logstash_frwrd.crt
+    dest: /etc/ssl
+- name: creating file for filebeat repo in yum repo
+  file:
+    path: /etc/yum.repos.d/filebeat.repo
+    state: touch
+- name: copy logstash repo file to yum repo
+  copy:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/filebeat.repo
+    dest: /etc/yum.repos.d/filebeat.repo
+- name: install filebeat
+  yum:
+    name: filebeat
+    state: present
+- name : getting elk master ip address
+  ec2_instance_facts:
+      filters:
+         "tag:Name": Elk
+      region: us-west-2
+  register: Elk
+  delegate_to: localhost
+- name: copy filebeat configuration
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/jenkins_filebeat.j2
+    dest: /etc/filebeat/filebeat.yml
+- name: service filebeat
+  sudo: yes
+  service:
+    name: filebeat
+    state: started
+    enabled: yes
+

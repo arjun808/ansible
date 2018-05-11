@@ -1,0 +1,13 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+            "mailer": {
+      "admin_gui": "http://yoursensuserverip:8080/",
+            "mail_from": "alerts@powerupcloud.com",
+            "mail_to": "alerts@powerupcloud.com",
+            "smtp_address": "localhost",
+            "smtp_port": "25",
+            "smtp_domain": "localhost"
+            }
+}
+{% endfor %}
+

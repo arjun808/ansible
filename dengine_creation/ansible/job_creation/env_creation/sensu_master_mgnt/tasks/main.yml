@@ -1,0 +1,143 @@
+---
+- name: creating repo for sensu
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/sensu_repo.j2
+    dest: /etc/yum.repos.d/sensu.repo
+- name: installing sensu
+  yum:
+    name: sensu
+    state: latest
+- name: installing rpm packages
+  get_url:
+    url: http://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-11.noarch.rpm
+    dest: /root
+- name: installing rpm packages
+  command: rpm -ivh epel-release-7-11.noarch.rpm
+  args:
+    chdir: /root
+- name: creating client-config file(making master server as one of the client0
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/client_config.j2
+    dest: /etc/sensu/conf.d/client.json
+- name: creating config file for transport
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/transport.j2
+    dest: /etc/sensu/conf.d/transport.json
+- name: creating config file for sensu-api
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/sensu_api.j2
+    dest: /etc/sensu/conf.d/api.json
+- name: installing redis
+  yum:
+    name: redis
+    state: latest
+- name: creating config file for redis
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/redis.j2
+    dest: /etc/sensu/conf.d/redis.json
+- name: installing erlang
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - erlang
+    - rabbitmq-server
+    - uchiwa
+    - gem
+    - postfix
+- name: creating config file for rabbitmq-server
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/rabbitmq.j2
+    dest: /etc/sensu/conf.d/rabbitmq.json
+- name: starting the services
+  systemd:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - sensu-server
+    - sensu-client
+    - rabbitmq-server
+    - redis
+    - sensu-api
+- name: creating vhost in rabbitmq
+  rabbitmq_vhost:
+    name: /sensu
+    state: present
+- name: creating user and assigining permissions in rabbitmq
+  rabbitmq_user:
+    user: sensu
+    password: secret
+    vhost: /sensu
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+    state: present
+- name: config file for uchiwa
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/uchiwa.j2
+    dest: /etc/sensu/uchiwa.json
+- name: starting uchiwa
+  shell: sudo service uchiwa start
+- name: installing sensu plugins
+  command: sensu-install -p cpu-checks
+           sensu-install -p cpu-checks
+           sensu-install -p disk-checks
+           sensu-install -p memory-checks
+           sensu-install -p nginx
+           sensu-install -p process-checks
+           sensu-install -p load-checks
+           sensu-install -p vmstats
+           gem install sensu-plugins-mailer
+  args:
+    chdir: /opt/sensu/embedded/bin/
+- name: installing development tools for gem
+  shell: yum groups mark install "Development Tools"
+- name: converting
+  shell: yum groups mark convert "Development Tools"
+- name: final installl
+  shell: yum groupinstall "Development Tools" -y
+- name: installing jenkins plugin
+  command: sensu-install -p jenkins
+  args:
+    chdir: /opt/sensu/embedded/bin/
+- name: config file for cpu-check
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/cpu-check.j2
+    dest: /etc/sensu/conf.d/check_cpu_linux.json
+- name: config file for memory-check
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/memory-check.j2
+    dest: /etc/sensu/conf.d/check_memory_linux.json
+- name: configfile for disk-check
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/disk-check.j2
+    dest: /etc/sensu/conf.d/check_disk_usage_linux.json
+- name: configfile for handlers
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/handler.j2
+    dest: /etc/sensu/conf.d/handler_mail.json
+- name: configfile for mailers
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/mailer.j2
+    dest: /etc/sensu/conf.d/mailer.json
+- name: getting client ip address
+  ec2_instance_facts:
+    filters:
+      "tag:Name": Jenkins
+    region: us-west-2
+  register: Jenkins
+  delegate_to: localhost
+- debug:
+    var: Jenkins
+- name: config file for jenkins
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/jenkins-check.j2
+    dest: /etc/sensu/conf.d/check-jenkins-linux.json
+- name: restarting sensu-server
+  systemd:
+    name: sensu-server
+    state: restarted
+- name: restarting uchiwa
+  systemd:
+    name: uchiwa
+    state: restarted

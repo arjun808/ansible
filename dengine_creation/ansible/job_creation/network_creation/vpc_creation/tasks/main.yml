@@ -1,0 +1,71 @@
+---
+- name: creating VPC
+  ec2_vpc_net:
+    name: "{{ vpc_tag }}"
+    cidr_block: "{{ cidrBlock }}"
+    region: us-west-2
+    tags:
+      Name: ec2_vpc_net
+      env: "{{ vpc_tag }}"
+  register: myvpc
+
+- name: creating subnet(s)
+  subnet_creation:
+    state: present
+    vpc_id: "{{ myvpc.vpc.id }}"
+    cidr: "{{ cidr_subnets }}"
+    region: us-west-2
+    az: us-west-2a
+    resource_tags:
+      Name: mysubnet
+      env: "{{ vpc_tag }}"
+  register: subnets
+- debug:
+   var: subnets
+
+- name: creating internet gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    state: present
+    region: us-west-2
+    tags:
+      Name: gateway
+      env: "{{ vpc_tag }}"
+  register: igw
+
+- name: Set up subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: us-west-2
+    tags:
+      Name: My route table
+      env: "{{ vpc_tag }}"
+    subnets:
+      - "{{ subnets.result_array[0].subnet.cidr_block }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+      - dest: "{{ cidrBlock }}"
+        vpc_id: "{{ myvpc.vpc.id }}"
+  register: public_route_table
+
+- name: security group fo subnet
+  ec2_group:
+    name: mysg
+    description: security group for webserver
+    vpc_id: "{{ myvpc.vpc.id }}"
+    region: us-west-2
+    tags:
+      Name: websg
+      env: "{{ vpc_tag }}"
+    rules:
+      - proto: all
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+  register: web_sg
+

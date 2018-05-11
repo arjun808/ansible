@@ -1,0 +1,17 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+      "sensu": [
+            {
+          "name": "sensu",
+          "host": "localhost",
+          "port": 4567,
+          "timeout": 10
+            }
+          ],
+          "uchiwa": {
+            "host": "0.0.0.0",
+            "port": 8081,
+            "refresh": 10
+          }
+}
+{% endfor %}

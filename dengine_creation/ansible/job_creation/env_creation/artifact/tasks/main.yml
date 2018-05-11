@@ -1,0 +1,14 @@
+---
+- name: Downloading from repo
+  get_url:
+     url: https://bintray.com/jfrog/artifactory-rpms/rpm
+     dest: /etc/yum.repos.d/
+
+- name: install artifactory
+  yum:
+    name: jfrog-artifactory-oss
+    state: latest
+
+- name: starting the service
+  systemd: state=started name=artifactory
+

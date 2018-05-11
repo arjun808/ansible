@@ -1,0 +1,92 @@
+---
+- name : getting elk master ip address
+  ec2_instance_facts:
+     filters:
+        "tag:Name": Elk
+     region: us-west-2
+  register: Elk
+  delegate_to: localhost
+- name: creating file for elasticsearch repo in yum repo
+  file:
+    path: /etc/yum.repos.d/elasticsearch.repo
+    state: touch
+- name: copy elasticsearch repo file to yum repo
+  copy:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/elasticsearch.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
+- name: Install Elastic Search
+  yum:
+    name: elasticsearch
+    state: present
+- name: service
+  sudo: yes
+  systemd: daemon_reload=yes
+- service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+- name: creating file for logstash repo in yum repo
+  file:
+    path: /etc/yum.repos.d/logstash.repo
+    state: touch
+- name: copy logstash repo file to yum repo
+  copy:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/logstash.repo
+    dest: /etc/yum.repos.d/logstash.repo
+- name: Install Logstash
+  yum:
+    name: logstash
+    state: present
+- name: creating file for kibana repo in yum repo
+  file:
+    path: /etc/yum.repos.d/kibana.repo
+    state: touch
+- name: copy kibana repo file to yum repo
+  copy:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/kibana.repo
+    dest: /etc/yum.repos.d/kibana.repo
+- name: Install kibana
+  yum:
+    name: kibana
+    state: present
+- name: service kibana
+  sudo: yes
+  service:
+    name: kibana
+    state: started
+    enabled: yes
+- name: printing elk master details
+  debug:
+    var: master
+- name: entry of ip address of elk master in openssl.conf
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/openssl.j2
+    dest: /etc/pki/tls/openssl.cnf
+- name: creating Openssl key
+  command: openssl req -x509 -days 365 -batch -nodes -newkey rsa:2048 -keyout logstash-forwarder.key -out logstash_frwrd.crt
+  args:
+    chdir: /etc/ssl
+- name: creating configuration file for logstash
+  file:
+    path: /etc/logstash/conf.d/logstash.conf
+    state: touch
+- name: copy configuration file to logstash.conf
+  copy:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/elk/logstash.conf
+    dest: /etc/logstash/conf.d/logstash.conf
+- name: service
+  sudo: yes
+  systemd: daemon_reload=yes
+- service:
+    name: logstash
+    state: started
+    enabled: yes
+- name: copy ssl certificate from elk master to ansible master
+  fetch:
+    src: /etc/ssl/logstash_frwrd.crt
+    dest: /etc/ssl/
+- name: move file to required directory for ssl certificate
+  copy:
+    src: /etc/ssl/{{ Elk.instances[0].public_ip_address }}/etc/ssl/logstash_frwrd.crt
+    dest: /etc/ssl
+  delegate_to: localhost

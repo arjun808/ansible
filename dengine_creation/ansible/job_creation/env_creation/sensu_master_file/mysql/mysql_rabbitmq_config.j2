@@ -1,0 +1,12 @@
+{% for hosts in groups [ 'tag_Name_' + ec2_config.Database ] %}
+{
+         "rabbitmq": {
+           "host": "{{ Sensu.instances[0].public_ip_address }}",
+           "vhost": "/sensu",
+           "user": "sensu",
+           "port": 5672,
+        "password": "secret"
+         }
+}
+{% endfor %}
+

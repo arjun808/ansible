@@ -1,0 +1,9 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+"transport": 
+{
+"name": "rabbitmq",
+"reconnect_on_error": true
+}
+}
+{% endfor %}

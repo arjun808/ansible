@@ -1,0 +1,13 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+      "checks": {
+         "check-jenkins-linux": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-jenkins-job-status.rb --j test  --url http://{{ Jenkins.instances[0].public_ip_address }}:8080 ",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %} 

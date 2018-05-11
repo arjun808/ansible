@@ -1,0 +1,12 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+      "rabbitmq": 
+{
+        "host": "127.0.0.1",
+            "port": 5672,
+        "vhost": "/sensu",
+        "user": "sensu",
+        "password": "secret"
+        }
+}
+{% endfor %}

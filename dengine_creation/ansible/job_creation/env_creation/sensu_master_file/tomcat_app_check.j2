@@ -1,0 +1,15 @@
+{% for hosts in groups [ 'tag_Name_Sensu' ] %}
+{
+      "checks": {
+         "tomcat-app-check": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-tomcat-app-deployment.rb -u http://{{ Tomcat.instances[0].public_ip_address }}:8080 -a tomcat -p tomcat -l /manager",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %}
+
+

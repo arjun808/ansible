@@ -1,0 +1,130 @@
+---
+- hosts: tag_Name_Sensu
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: sensu_master_uatprod
+
+- hosts: tag_Name_Elasticsearch
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk
+    - role: geerlingguy.elasticsearch
+      become: true
+
+- hosts: tag_Name_Redis
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: geerlingguy.repo-epel
+    - role: geerlingguy.redis 
+
+- hosts: tag_Name_Tomcat
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: devops.tomcat7
+  tasks:
+   - name: replace tomcat-user.xml
+     template:
+       src: /root/dengine_creation/ansible/job_creation/env_creation/tomcat_template.j2
+       dest: /usr/share/tomcat/conf/tomcat-users.xml
+   - name: creating a directory
+     file:
+       path: /usr/share/tomcat/webapps/sample
+       state: directory
+   - name: placing index file
+     copy:
+       src: /root/dengine_creation/ansible/job_creation/env_creation/index.html
+       dest: /usr/share/tomcat/webapps/sample/index.html
+   - name: restart service
+     systemd:
+      state: restarted
+      daemon_reload: yes
+      name: tomcat
+   - name: deploying jar file to tomcat
+    maven_artifact:
+      group_id: com.wakaleo.gameoflife
+      artifact_id: gameoflife
+      version: 1.0-20180328.063512-2
+      extension: war
+      repository_url: 'http://ec2-34-214-191-101.us-west-2.compute.amazonaws.com:8081/artifactory/webapp/#/artifacts/browse/tree/General/libs-snapshot-local/'
+      dest: /usr/share/tomcat/webapps/game-of-life.war
+
+- hosts: tag_Name_Tomcat
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: sensu_client_tomcat
+    - role: elk_client_tomcat
+
+- hosts: tag_Name_MySql
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: geerlingguy.mysql
+  tasks:
+    - name: installing pip
+      get_url:
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: /root
+    - name: installing pip
+      command: sudo python get-pip.py
+      args:
+        chdir: /root
+
+    - name: Install the Python MySQLB module
+      pip: name=MySQL-python state=latest
+
+    - name: Create the flask database
+      mysql_db: name=rag_db state=present
+
+- hosts: tag_Name_MySql
+  become_method: sudo
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  gather_facts: true
+  vars_files:
+    - vars1/main.yml
+  roles:
+    - role: sensu_client_mysql
+    - role: elk_client_database
+
+
+
+

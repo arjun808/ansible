@@ -1,0 +1,14 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+      "checks": {
+         "check-cpu-linux": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-cpu.rb -w 80 -c 90 ",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %}
+

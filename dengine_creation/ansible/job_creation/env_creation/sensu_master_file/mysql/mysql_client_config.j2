@@ -1,0 +1,18 @@
+{% for hosts in groups [ 'tag_Name_' + ec2_config.Database  ] %}
+{
+         "client": {
+"name": "Sensu-client",
+           "address": "{{ MySql.instances[0].public_ip_address }}",
+           "subscriptions": [ "linux" ],
+           "keepalive": {
+           "handler": "mailer",
+             "thresholds": {
+           "warning": 250,
+           "critical": 300
+             },
+             "refresh": 90
+           }
+         }
+}
+{% endfor %}
+

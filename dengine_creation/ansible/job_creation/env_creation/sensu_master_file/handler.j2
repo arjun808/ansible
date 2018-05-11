@@ -1,0 +1,10 @@
+{% for hosts in groups [ 'tag_Name_'+ ec2_config.Monitoring ] %}
+{
+          "handlers": {
+            "mailer": {
+          "type": "pipe",
+          "command": "/opt/sensu/embedded/bin/handler-mailer.rb"
+            }
+          }
+}
+{% endfor %}

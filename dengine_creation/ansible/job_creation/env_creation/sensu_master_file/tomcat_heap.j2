@@ -1,0 +1,14 @@
+{% for hosts in groups [ 'tag_Name_Sensu' ] %}
+{
+      "checks": {
+         "tomcat-heap-check": {
+       "handlers": ["mailer"],
+       "command": "/opt/sensu/embedded/bin/check-tomcat-heap-pcnt.rb -u http://{{ Tomcat.instances[0].public_ip_address }}:8080 -a tomcat -p tomcat -w 80 -c 90",
+       "interval": 60,
+       "occurrences": 5,
+          "subscribers": [ "linux" ]
+       }
+         }
+}
+{% endfor %}
+

@@ -1,0 +1,23 @@
+---
+- name: download link
+  get_url:
+     url: http://www-eu.apache.org/dist/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz
+     dest: /usr/local
+- name: Unarchive a file that needs to be downloaded (added in 2.0)
+  unarchive:
+    src: /usr/local/apache-maven-3.5.2-bin.tar.gz
+    dest: /usr/local
+    remote_src: yes
+- name: create file for home path
+  file:
+    path: /etc/profile.d/maven.sh
+    state: touch
+- name: add lines to maven file
+  blockinfile:
+    path: /etc/profile.d/maven.sh
+    block: |
+      export M2_HOME=/usr/local/apache-maven-3.5.2
+      export PATH=${M2_HOME}/bin:${PATH}
+- name: update home path
+  shell: source /etc/profile.d/maven.sh
+

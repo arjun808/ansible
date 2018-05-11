@@ -1,0 +1,62 @@
+---
+- name: getting jenkins ip address
+  ec2_instance_facts:
+      filters:
+        "tag:Name": Jenkins
+      region: us-west-2
+  register: Jenkins
+  delegate_to: localhost
+- debug:
+      var: Jenkins
+- name: getiing master ip address
+  ec2_instance_facts:
+    filters:
+      "tag:Name": Sensu
+    region: us-west-2
+  register: Sensu
+  delegate_to: localhost
+- debug:
+    var: Sensu
+- name: template for sensu repo
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/client_sensu_repo.txt
+    dest: /etc/yum.repos.d/sensu.repo
+- name: installing sensu
+  yum:
+    name: sensu
+    state: latest
+- name: template for client config file
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/jenkins/jenkins_client_config.j2
+    dest: /etc/sensu/conf.d/client.json
+- name: template for rabbitmq config file
+  template:
+    src: /root/dengine_creation/ansible/job_creation/env_creation/sensu_master_file/jenkins/jenkins_rabbitmq_config.j2
+    dest: /etc/sensu/config.json
+- name: installing sensu plugins
+  command: sensu-install -p cpu-checks
+           sensu-install -p cpu-checks
+           sensu-install -p disk-checks
+           sensu-install -p memory-checks
+           sensu-install -p nginx
+           sensu-install -p process-checks
+           sensu-install -p load-checks
+           sensu-install -p vmstats
+           gem install sensu-plugins-mailer
+  args:
+    chdir: /opt/sensu/embedded/bin/
+- name: installing development tools for gem
+  shell: yum groups mark install "Development Tools"
+- name: converting
+  shell: yum groups mark convert "Development Tools"
+- name: final installl
+  shell: yum groupinstall "Development Tools" -y
+- name: installing jenkins plugin
+  command: sensu-install -p jenkins
+  args:
+    chdir: /opt/sensu/embedded/bin/
+- name: starting sensu-client
+  service:
+    name: sensu-client
+    state: started
+
